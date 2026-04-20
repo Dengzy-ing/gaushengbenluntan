@@ -121,12 +121,15 @@
     </div>
   </nav>
 
-  <!-- 弹窗部分保持不变，此处省略以节省篇幅，实际使用时请保留原完整弹窗代码 -->
-  <!-- 登录弹窗、注册弹窗、编辑弹窗、详情弹窗、轮播管理弹窗均与原始文件完全一致 -->
+  <!-- 登录弹窗 -->
   <div class="modal" id="login-modal"><div class="modal-content"><h2>用户登录</h2><input type="text" id="login-user" placeholder="请输入用户名"><input type="password" id="login-pwd" placeholder="请输入密码"><button class="btn" id="login-submit">立即登录</button><button class="btn" style="background:#999;margin-left:10px;" onclick="closeModal()">关闭</button></div></div>
+  <!-- 注册弹窗 -->
   <div class="modal" id="reg-modal"><div class="modal-content"><h2>用户注册</h2><input type="text" id="reg-user" placeholder="请设置用户名"><input type="password" id="reg-pwd" placeholder="请设置密码"><button class="btn" id="reg-submit">立即注册</button><button class="btn" style="background:#999;margin-left:10px;" onclick="closeModal()">关闭</button></div></div>
+  <!-- 编辑弹窗 -->
   <div class="modal" id="edit-modal"><div class="modal-content"><h2 id="edit-title-text">新增内容</h2><input type="hidden" id="edit-type"><input type="hidden" id="edit-id"><input type="text" id="edit-content-title" placeholder="请输入标题"><div class="editor"><div class="editor-content" id="editor-content" contenteditable="true"></div><div class="word-toolbar" id="wordToolbar"><button onclick="doBold()">加粗</button><button onclick="doUnderline()">下划线</button><button onclick="setFontSize(16)">小</button><button onclick="setFontSize(20)">中</button><button onclick="setFontSize(24)">大</button></div></div><button class="btn" onclick="pickImage()">插入图片</button><button class="btn" id="save-content">保存</button><button class="btn" style="background:#999;margin-left:10px;" onclick="closeModal()">关闭</button></div></div>
+  <!-- 详情弹窗 -->
   <div class="modal detail-modal" id="detail-modal"><div class="modal-content"><div class="detail-header"><h2 id="detail-title"></h2><div><button class="btn" id="toggle-fullscreen-btn" onclick="toggleFullscreen()">全屏</button><button class="btn" style="background:#999;margin-left:5px;" onclick="closeModal()">关闭</button></div></div><div class="content-detail" id="detail-content"></div></div></div>
+  <!-- 轮播管理弹窗 -->
   <div class="modal" id="carousel-modal"><div class="modal-content"><h2>主页轮播管理</h2><div class="carousel-setting"><p>当前轮播图片：</p><div id="carousel-list"></div><input type="file" id="carousel-image-input" accept="image/*" style="margin:10px 0;"><button class="btn" onclick="addCarouselImage()">添加图片</button><p style="margin-top:10px;">轮播间隔时间（秒）：</p><input type="number" id="carousel-interval" value="5" min="1" max="60"><button class="btn" onclick="saveCarouselSetting()" style="margin-left:10px;">保存设置</button></div><button class="btn" style="background:#999;margin-top:20px;" onclick="closeModal()">关闭</button></div></div>
 
   <div class="container">
@@ -166,31 +169,11 @@
 
 <script>
 (function() {
-  // ---------- 全局函数 ----------
-  window.openLoginModal = () => document.getElementById('login-modal').style.display = 'flex';
-  window.openRegModal = () => document.getElementById('reg-modal').style.display = 'flex';
-  window.closeModal = () => {
-    document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
-    document.getElementById('wordToolbar').style.display = 'none';
-    document.getElementById('detail-modal').classList.remove('fullscreen');
-  };
-  window.toggleFullscreen = () => {
-    const modal = document.getElementById('detail-modal');
-    modal.classList.toggle('fullscreen');
-    document.getElementById('toggle-fullscreen-btn').innerText = modal.classList.contains('fullscreen') ? '窗口' : '全屏';
-  };
-
-  // 富文本工具函数 (保持不变)
-  window.doBold = () => { /* ... 与原代码相同 ... */ };
-  window.doUnderline = () => { /* ... 与原代码相同 ... */ };
-  window.setFontSize = (size) => { /* ... 与原代码相同 ... */ };
-  window.pickImage = () => { /* ... 与原代码相同 ... */ };
-
-  // ---------- 内置示例数据 ----------
+  // ================== 全局变量与初始化 ==================
   const DEFAULT_ADMIN = { username: "admin", pwd: "admin123", role: "admin" };
   const NEW_ADMIN = { username: "root", pwd: "root123", role: "admin" };
   
-  // 示例内容数据（每个板块3条）
+  // 示例内容数据
   const SAMPLE_CONTENTS = {
     notice: [
       { id: 1001, title: '📢 论坛正式上线公告', content: '<p>瓜升本学习论坛今日正式开放！欢迎各位升本学子加入交流，祝大家一战上岸！</p>', createTime: '2025-03-01 10:00', author: '管理员' },
@@ -213,65 +196,63 @@
       { id: 4003, title: '🏫 2025年专升本招生院校名单（部分）', content: '<p>已公布招生计划的院校：XX大学、XX师范大学、XX理工大学……详情请查看各校官网。</p>', createTime: '2025-03-14 12:00', author: '资讯小助手' }
     ]
   };
-
-  // 示例帖子数据（3条）
   const SAMPLE_POSTS = [
     { id: 5001, user: '升本小萌新', content: '刚开始准备专升本，有点迷茫，有没有一起打卡监督的小伙伴呀？', time: '2025-03-01 08:30', comments: [{ user: '奋斗ing', content: '一起加油！每天来论坛打卡！' }, { user: '李学长', content: '建议先制定一个复习计划，按部就班。' }] },
     { id: 5002, user: '英语困难户', content: '英语阅读总是错很多，求大佬分享阅读技巧！', time: '2025-03-02 14:15', comments: [{ user: '王学姐', content: '先读题干再定位原文，注意同义替换。' }] },
     { id: 5003, user: '数学小王子', content: '分享一个高数易错点：极限计算时注意左右极限是否相等。', time: '2025-03-03 21:20', comments: [{ user: '感谢大神', content: '太有用了！已收藏。' }] }
   ];
-
-  // 轮播图图片（3张在线占位图，可更换）
   const SAMPLE_CAROUSEL_IMAGES = [
-    'https://picsum.photos/id/1043/1920/1080', // 学习场景
-    'https://picsum.photos/id/20/1920/1080',    // 书籍
-    'https://picsum.photos/id/26/1920/1080'     // 办公桌
+    'https://picsum.photos/id/1043/1920/1080',
+    'https://picsum.photos/id/20/1920/1080',
+    'https://picsum.photos/id/26/1920/1080'
   ];
 
-  // ---------- 初始化数据（融合已有存储与示例） ----------
   let currentUser = null;
-  function initData() {
-    // 用户数据
-    let users = JSON.parse(localStorage.getItem('users')) || [];
-    if (!users.some(u => u.username === DEFAULT_ADMIN.username)) users.push(DEFAULT_ADMIN);
-    if (!users.some(u => u.username === NEW_ADMIN.username)) users.push(NEW_ADMIN);
-    localStorage.setItem('users', JSON.stringify(users));
-    window.users = users;
+  window.users = [];
+  window.contents = { notice: [], answer: [], resource: [], news: [] };
+  window.carouselConfig = { images: [], interval: 5 };
+  window.posts = [];
+  window.carouselTimer = null;
+  window.currentSlideIndex = 0;
 
-    // 内容数据（notice, answer, resource, news）
+  // 初始化数据（融合本地存储与示例）
+  function initData() {
+    // 用户
+    let storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+    if (!storedUsers.some(u => u.username === DEFAULT_ADMIN.username)) storedUsers.push(DEFAULT_ADMIN);
+    if (!storedUsers.some(u => u.username === NEW_ADMIN.username)) storedUsers.push(NEW_ADMIN);
+    localStorage.setItem('users', JSON.stringify(storedUsers));
+    window.users = storedUsers;
+
+    // 内容
     let storedContents = JSON.parse(localStorage.getItem('contents')) || {};
-    // 如果本地存储为空，则使用示例数据；否则合并（保留用户自己添加的内容）
-    let finalContents = {};
     ['notice', 'answer', 'resource', 'news'].forEach(type => {
       if (storedContents[type] && storedContents[type].length > 0) {
-        finalContents[type] = storedContents[type];
+        window.contents[type] = storedContents[type];
       } else {
-        finalContents[type] = SAMPLE_CONTENTS[type] || [];
+        window.contents[type] = SAMPLE_CONTENTS[type] || [];
       }
     });
-    window.contents = finalContents;
     localStorage.setItem('contents', JSON.stringify(window.contents));
 
-    // 轮播图配置
-    let carouselConfig = JSON.parse(localStorage.getItem('carouselConfig'));
-    if (!carouselConfig || !carouselConfig.images || carouselConfig.images.length === 0) {
-      carouselConfig = { images: SAMPLE_CAROUSEL_IMAGES, interval: 5 };
+    // 轮播
+    let storedCarousel = JSON.parse(localStorage.getItem('carouselConfig'));
+    if (!storedCarousel || !storedCarousel.images || storedCarousel.images.length === 0) {
+      storedCarousel = { images: SAMPLE_CAROUSEL_IMAGES, interval: 5 };
     }
-    window.carouselConfig = carouselConfig;
-    localStorage.setItem('carouselConfig', JSON.stringify(carouselConfig));
-    window.carouselTimer = null;
-    window.currentSlideIndex = 0;
+    window.carouselConfig = storedCarousel;
+    localStorage.setItem('carouselConfig', JSON.stringify(storedCarousel));
 
-    // 帖子数据
-    let posts = JSON.parse(localStorage.getItem('posts'));
-    if (!posts || posts.length === 0) {
-      posts = SAMPLE_POSTS;
+    // 帖子
+    let storedPosts = JSON.parse(localStorage.getItem('posts'));
+    if (!storedPosts || storedPosts.length === 0) {
+      storedPosts = SAMPLE_POSTS;
     }
-    window.posts = posts;
-    localStorage.setItem('posts', JSON.stringify(posts));
+    window.posts = storedPosts;
+    localStorage.setItem('posts', JSON.stringify(storedPosts));
   }
 
-  // ---------- 渲染函数 ----------
+  // ================== UI 更新与渲染 ==================
   function updateDateInfo() {
     const now = new Date();
     const year = now.getFullYear(), month = now.getMonth() + 1, day = now.getDate();
@@ -328,7 +309,91 @@
     }, window.carouselConfig.interval * 1000);
   }
 
-  // 详情展示
+  function updateTopBarAuthUI(isLoggedIn) {
+    document.querySelectorAll('.right-links a').forEach(link => {
+      const txt = link.innerText.trim();
+      if (txt === '登录' || txt === '注册') link.style.display = isLoggedIn ? 'none' : 'inline';
+      else if (txt === '退出登录') link.style.display = isLoggedIn ? 'inline' : 'none';
+    });
+  }
+
+  // ================== 全局交互函数 ==================
+  window.openLoginModal = () => document.getElementById('login-modal').style.display = 'flex';
+  window.openRegModal = () => document.getElementById('reg-modal').style.display = 'flex';
+  window.closeModal = () => {
+    document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+    document.getElementById('wordToolbar').style.display = 'none';
+    document.getElementById('detail-modal').classList.remove('fullscreen');
+  };
+  window.toggleFullscreen = () => {
+    const modal = document.getElementById('detail-modal');
+    modal.classList.toggle('fullscreen');
+    document.getElementById('toggle-fullscreen-btn').innerText = modal.classList.contains('fullscreen') ? '窗口' : '全屏';
+  };
+
+  // 富文本功能
+  window.doBold = () => {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    const content = range.extractContents();
+    const strong = document.createElement('strong');
+    strong.appendChild(content);
+    range.insertNode(strong);
+    sel.removeAllRanges();
+    document.getElementById('wordToolbar').style.display = 'none';
+  };
+  window.doUnderline = () => {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    const content = range.extractContents();
+    const u = document.createElement('u');
+    u.appendChild(content);
+    range.insertNode(u);
+    sel.removeAllRanges();
+    document.getElementById('wordToolbar').style.display = 'none';
+  };
+  window.setFontSize = (size) => {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    const content = range.extractContents();
+    const span = document.createElement('span');
+    span.style.fontSize = size + 'px';
+    span.appendChild(content);
+    range.insertNode(span);
+    sel.removeAllRanges();
+    document.getElementById('wordToolbar').style.display = 'none';
+  };
+  window.pickImage = () => {
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = 'image/*';
+    inp.onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = document.createElement('img');
+        img.src = ev.target.result;
+        img.style.maxWidth = '100%';
+        img.style.cursor = 'se-resize';
+        img.onmousedown = function(ev) {
+          ev.preventDefault();
+          const startW = this.offsetWidth, startX = ev.clientX;
+          const onMove = e => { this.style.width = Math.max(50, startW + e.clientX - startX) + 'px'; };
+          const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        };
+        document.getElementById('editor-content').appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    };
+    inp.click();
+  };
+
   window.showContentDetail = (type, id) => {
     const item = (window.contents[type] || []).find(i => i.id == id);
     if (!item) return;
@@ -340,36 +405,148 @@
     modal.style.display = 'flex';
   };
 
-  // 管理员功能 (保留原逻辑)
+  // ================== 管理员功能 ==================
   window.openAdmin = () => {
     if (!currentUser || currentUser.role !== 'admin') return alert('仅管理员可进入');
     document.querySelector('.admin-box').style.display = 'block';
     document.getElementById('admin').scrollIntoView({ behavior: 'smooth' });
   };
-  window.showUserList = () => { /* ... 保留原代码 ... */ };
-  window.showPostList = () => { /* ... 保留原代码 ... */ };
-  window.manageContent = (type) => { /* ... 保留原代码 ... */ };
-  window.openEditModal = (type, id = '') => { /* ... 保留原代码 ... */ };
-  window.editContent = (type, id) => openEditModal(type, id);
-  window.delContent = (type, id) => { /* ... 保留原代码 ... */ };
-  window.openCarouselModal = () => { /* ... 保留原代码 ... */ };
-  window.addCarouselImage = () => { /* ... 保留原代码 ... */ };
-  window.delCarouselImage = (idx) => { /* ... 保留原代码 ... */ };
-  window.saveCarouselSetting = () => { /* ... 保留原代码 ... */ };
-  window.addComment = (pid) => { /* ... 保留原代码 ... */ };
-  window.delPost = (id) => { /* ... 保留原代码 ... */ };
-  
-  function saveContent() { /* ... 保留原保存逻辑，注意更新localStorage后重新渲染 ... */ }
 
-  // 登录退出UI更新
-  function updateTopBarAuthUI(isLoggedIn) {
-    document.querySelectorAll('.right-links a').forEach(link => {
-      const txt = link.innerText.trim();
-      if (txt === '登录' || txt === '注册') link.style.display = isLoggedIn ? 'none' : 'inline';
-      else if (txt === '退出登录') link.style.display = isLoggedIn ? 'inline' : 'none';
+  window.showUserList = () => {
+    let html = '<tr><th>用户名</th><th>权限</th></tr>';
+    window.users.forEach(u => { html += `<tr><td>${u.username}</td><td>${u.role}</td></tr>`; });
+    document.getElementById('admin-table').innerHTML = html;
+  };
+
+  window.showPostList = () => {
+    let html = '<tr><th>用户</th><th>内容</th><th>操作</th></tr>';
+    window.posts.forEach(p => {
+      html += `<tr><td>${p.user}</td><td>${(p.content || '').slice(0,20)}...</td><td><button class="btn btn-danger" onclick="delPost(${p.id})">删除</button></td></tr>`;
     });
+    document.getElementById('admin-table').innerHTML = html || '<tr><td colspan="3">暂无帖子</td></tr>';
+  };
+
+  window.manageContent = (type) => {
+    let html = `<tr><th>ID</th><th>标题</th><th>作者</th><th>时间</th><th>操作</th></tr>`;
+    const list = window.contents[type] || [];
+    list.forEach(item => {
+      html += `<tr><td>${item.id}</td><td>${item.title}</td><td>${item.author || '管理员'}</td><td>${item.createTime || ''}</td><td class="op-btn-group"><button class="btn btn-edit" onclick="editContent('${type}',${item.id})">编辑</button><button class="btn btn-danger" onclick="delContent('${type}',${item.id})">删除</button></td></tr>`;
+    });
+    document.getElementById('admin-table').innerHTML = html || `<tr><td colspan="5">暂无数据</td></tr>`;
+  };
+
+  window.openEditModal = (type, id = '') => {
+    document.getElementById('edit-type').value = type;
+    document.getElementById('edit-id').value = id;
+    document.getElementById('edit-title-text').innerText = id ? '编辑内容' : '新增内容';
+    if (id) {
+      const item = (window.contents[type] || []).find(i => i.id == id);
+      if (item) {
+        document.getElementById('edit-content-title').value = item.title;
+        document.getElementById('editor-content').innerHTML = item.content;
+      }
+    } else {
+      document.getElementById('edit-content-title').value = '';
+      document.getElementById('editor-content').innerHTML = '';
+    }
+    document.getElementById('edit-modal').style.display = 'flex';
+  };
+
+  window.editContent = (type, id) => openEditModal(type, id);
+
+  window.delContent = (type, id) => {
+    if (!confirm('确定删除？')) return;
+    window.contents[type] = (window.contents[type] || []).filter(i => i.id != id);
+    localStorage.setItem('contents', JSON.stringify(window.contents));
+    renderContentList(type);
+    manageContent(type);
+  };
+
+  function saveContent() {
+    const type = document.getElementById('edit-type').value;
+    const id = document.getElementById('edit-id').value;
+    const title = document.getElementById('edit-content-title').value;
+    const content = document.getElementById('editor-content').innerHTML;
+    if (!title || !content) return alert('标题和内容不能为空');
+    
+    const item = {
+      id: id || Date.now(),
+      title, content,
+      createTime: new Date().toLocaleString(),
+      author: currentUser?.username || 'admin'
+    };
+    const list = window.contents[type] || [];
+    if (id) {
+      window.contents[type] = list.map(i => i.id == id ? item : i);
+    } else {
+      list.unshift(item);
+      window.contents[type] = list;
+    }
+    localStorage.setItem('contents', JSON.stringify(window.contents));
+    alert('保存成功！');
+    closeModal();
+    renderContentList(type);
+    if (document.querySelector('.admin-box').style.display === 'block') manageContent(type);
   }
 
+  // 轮播管理
+  window.openCarouselModal = () => {
+    renderCarouselList();
+    document.getElementById('carousel-modal').style.display = 'flex';
+  };
+  function renderCarouselList() {
+    const listEl = document.getElementById('carousel-list');
+    let html = '';
+    window.carouselConfig.images.forEach((img, idx) => {
+      html += `<div style="display:flex;align-items:center;gap:10px;margin:5px 0;"><img src="${img}" style="width:100px;height:60px;object-fit:cover;"><button class="btn btn-danger" onclick="delCarouselImage(${idx})">删除</button></div>`;
+    });
+    listEl.innerHTML = html || '<p>暂无轮播图片，将使用默认黑色背景</p>';
+    document.getElementById('carousel-interval').value = window.carouselConfig.interval;
+  }
+  window.addCarouselImage = () => {
+    const input = document.getElementById('carousel-image-input');
+    if (!input.files || !input.files[0]) return alert('请选择图片');
+    const reader = new FileReader();
+    reader.onload = e => {
+      window.carouselConfig.images.push(e.target.result);
+      renderCarouselList();
+    };
+    reader.readAsDataURL(input.files[0]);
+  };
+  window.delCarouselImage = (idx) => {
+    window.carouselConfig.images.splice(idx, 1);
+    renderCarouselList();
+  };
+  window.saveCarouselSetting = () => {
+    const interval = parseInt(document.getElementById('carousel-interval').value);
+    if (isNaN(interval) || interval < 1 || interval > 60) return alert('请输入1-60之间的数字');
+    window.carouselConfig.interval = interval;
+    localStorage.setItem('carouselConfig', JSON.stringify(window.carouselConfig));
+    alert('保存成功！');
+    initCarousel();
+    closeModal();
+  };
+
+  // 评论与删除帖子
+  window.addComment = (pid) => {
+    if (!currentUser) return alert('请登录');
+    const c = prompt('输入评论');
+    if (!c) return;
+    const p = window.posts.find(x => x.id === pid);
+    if (!p.comments) p.comments = [];
+    p.comments.push({ user: currentUser.username, content: c });
+    localStorage.setItem('posts', JSON.stringify(window.posts));
+    renderPosts();
+  };
+  window.delPost = (id) => {
+    if (!confirm('确定删除该帖子？')) return;
+    window.posts = window.posts.filter(x => x.id !== id);
+    localStorage.setItem('posts', JSON.stringify(window.posts));
+    showPostList();
+    renderPosts();
+  };
+
+  // 退出登录
   window.logout = () => {
     if (!confirm('确定要退出登录吗？')) return;
     currentUser = null;
@@ -383,7 +560,7 @@
     alert('已退出登录');
   };
 
-  // 页面加载
+  // ================== DOMContentLoaded ==================
   document.addEventListener('DOMContentLoaded', () => {
     initData();
     updateDateInfo();
@@ -395,7 +572,7 @@
     initCarousel();
     setInterval(updateDateInfo, 60000);
 
-    // 登录注册发帖等事件绑定 (与原代码一致)
+    // 登录
     document.getElementById('login-submit').onclick = () => {
       const u = document.getElementById('login-user').value, p = document.getElementById('login-pwd').value;
       const user = window.users.find(x => x.username === u && x.pwd === p);
@@ -413,6 +590,7 @@
       renderPosts();
     };
 
+    // 注册
     document.getElementById('reg-submit').onclick = () => {
       const u = document.getElementById('reg-user').value, p = document.getElementById('reg-pwd').value;
       if (!u || !p) return alert('请填写完整');
@@ -423,6 +601,7 @@
       closeModal();
     };
 
+    // 发帖
     document.getElementById('send-post').onclick = () => {
       if (!currentUser) return alert('请登录');
       const c = document.getElementById('post-content').value;
@@ -433,15 +612,17 @@
       renderPosts();
     };
 
+    // 打卡
     document.getElementById('clock-btn').onclick = () => {
       if (!currentUser) return alert('请登录');
       document.getElementById('clock-tip').innerText = '打卡成功';
       document.getElementById('clock-btn').disabled = true;
     };
 
+    // 保存内容
     document.getElementById('save-content').onclick = saveContent;
 
-    // 富文本工具栏事件
+    // 富文本工具栏
     const editor = document.getElementById('editor-content');
     const toolbar = document.getElementById('wordToolbar');
     editor.addEventListener('mouseup', () => {
@@ -470,7 +651,6 @@
 
     updateTopBarAuthUI(false);
   });
-
 })();
 </script>
 </body>
